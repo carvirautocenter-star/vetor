@@ -1,638 +1,1248 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR" class="h-full">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sticker & Vector Studio Pro</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            touch-action: manipulation;
-        }
-        /* Custom smooth scrollbars */
-        ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 4px;
-        }
-        .checkerboard {
-            background-image: linear-gradient(45deg, #1e293b 25%, transparent 25%), 
-                              linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
-                              linear-gradient(45deg, transparent 75%, #1e293b 75%), 
-                              linear-gradient(-45deg, transparent 75%, #1e293b 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sticker &amp; Vector Studio Pro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  .app-shell { height: 100vh; height: 100dvh; }
+  body {
+    font-family: 'Inter', sans-serif;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0f172a; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+  .checkerboard {
+    background-color: #0b1220;
+    background-image:
+      linear-gradient(45deg, #1e293b 25%, transparent 25%),
+      linear-gradient(-45deg, #1e293b 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #1e293b 75%),
+      linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  }
+
+  /* Sliders com área de toque confortável no mobile */
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 22px; background: transparent; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px; border-radius: 999px; background: #334155;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; margin-top: -7px; border-radius: 50%;
+    background: #6366f1; border: 2px solid #0f172a;
+    box-shadow: 0 0 0 1px #4f46e5;
+  }
+  input[type="range"]::-moz-range-track { height: 4px; border-radius: 999px; background: #334155; }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #6366f1; border: 2px solid #0f172a;
+  }
+
+  #mainCanvas { touch-action: pan-x pan-y; display: block; }
+  #mainCanvas.cropping { touch-action: none; cursor: crosshair; }
+
+  .drawer { transition: transform .28s cubic-bezier(.4,0,.2,1); will-change: transform; }
+</style>
 </head>
-<body class="h-full bg-slate-950 text-slate-100 flex flex-col overflow-hidden">
+<body class="bg-slate-950 text-slate-100">
 
-    <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0 shadow-lg z-20">
-        <div class="flex items-center space-x-2.5">
-            <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-md shadow-indigo-500/20 flex items-center justify-center">
-                <i data-lucide="layers" class="w-5 h-5"></i>
-            </div>
-            <div>
-                <h1 class="font-bold text-sm sm:text-base text-white tracking-tight flex items-center gap-1.5">
-                    StickerStudio <span class="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full border border-indigo-500/30">A4 Pro</span>
-                </h1>
-                <p class="text-[11px] text-slate-400 hidden sm:block">Vetorizador Inteligente & Folhas A4 300 DPI</p>
-            </div>
-        </div>
-        <div class="flex items-center space-x-2">
-            <button onclick="app.resetWorkspace()" class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition border border-slate-700">
-                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Limpar</span>
-            </button>
-            <button onclick="app.exportA4Sheet()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-lg transition shadow-md shadow-indigo-600/30">
-                <i data-lucide="printer" class="w-3.5 h-3.5"></i> Exportar A4
-            </button>
-            <!-- Mobile Toggle Sidebar -->
-            <button onclick="app.toggleMobileSidebar()" class="lg:hidden p-2 bg-indigo-600 text-white rounded-lg">
-                <i data-lucide="menu" class="w-4 h-4"></i>
-            </button>
-        </div>
-    </header>
+<div class="app-shell flex flex-col overflow-hidden">
 
-    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-        
-        <!-- SIDEBAR CONTROLS (Desktop & Mobile Drawer) -->
-        <aside id="sidebar" class="absolute lg:relative inset-y-0 left-0 w-80 max-w-full bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 shadow-2xl lg:shadow-none">
-            <div class="p-3.5 border-b border-slate-800 font-semibold text-xs text-slate-200 flex items-center justify-between">
-                <span class="flex items-center gap-2"><i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i> Painel de Controle</span>
-                <div class="flex items-center gap-2">
-                    <span id="stepIndicator" class="text-[10px] text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800/50">Passo 1: Upload</span>
-                    <button onclick="app.toggleMobileSidebar()" class="lg:hidden text-slate-400 hover:text-white">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="flex-1 overflow-y-auto p-4 space-y-4">
-                
-                <!-- SECTION 1: UPLOAD -->
-                <div class="space-y-1.5">
-                    <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">1. Enviar Cartela / Adesivos</label>
-                    <div id="dropZone" class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-3 text-center cursor-pointer bg-slate-800/40 hover:bg-slate-800 transition group relative">
-                        <input type="file" id="imageUpload" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10">
-                        <div class="flex flex-col items-center justify-center space-y-1 py-1">
-                            <div class="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-full group-hover:scale-110 transition">
-                                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
-                            </div>
-                            <div class="text-xs text-slate-300 font-medium">Toque para enviar cartela</div>
-                            <div class="text-[10px] text-slate-500">PNG, JPG, WebP (Ideal em grade A4)</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECTION 2: CROPPING & ITEM ISOLATION -->
-                <div class="space-y-2 pt-2 border-t border-slate-800">
-                    <div class="flex items-center justify-between">
-                        <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">2. Recorte Individual</label>
-                        <button id="btnToggleCrop" onclick="app.toggleCropMode()" disabled class="text-[11px] bg-slate-800 hover:bg-indigo-600 disabled:opacity-50 text-slate-300 hover:text-white px-2 py-1 rounded transition flex items-center gap-1 border border-slate-700">
-                            <i data-lucide="crop" class="w-3 h-3"></i> Recortar Item
-                        </button>
-                    </div>
-                    <p class="text-[10px] text-slate-400 leading-relaxed">
-                        Ative o modo de recorte e arraste o dedo/mouse sobre um único adesivo/chaveiro na grade para isolá-lo.
-                    </p>
-                    <button id="btnApplyCrop" onclick="app.applyCrop()" style="display:none;" class="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow transition flex items-center justify-center gap-1.5">
-                        <i data-lucide="check" class="w-3.5 h-3.5"></i> Confirmar Recorte
-                    </button>
-                </div>
-
-                <!-- SECTION 3: VECTORIZATION / STICKER STYLING -->
-                <div class="space-y-3 pt-2 border-t border-slate-800">
-                    <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">3. Tratamento & Estilo</label>
-                    
-                    <div>
-                        <label class="text-[10px] text-slate-400 block mb-1">Modo de Conversão</label>
-                        <select id="vectorMode" onchange="app.processImage()" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg p-2 focus:ring-1 focus:ring-indigo-500 outline-none">
-                            <option value="color">Redução de Cores (Estilo Ilustração)</option>
-                            <option value="threshold">Preto e Branco / Linha (Threshold)</option>
-                            <option value="smooth">Suavização Estilizada (Cartoon)</option>
-                        </select>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-[10px] text-slate-400 block mb-1">Cores (<span id="colorCountVal">8</span>)</label>
-                            <input type="range" id="colorCount" min="2" max="32" value="8" oninput="document.getElementById('colorCountVal').innerText=this.value; app.processImage();" class="w-full accent-indigo-500 bg-slate-800 rounded h-1">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-slate-400 block mb-1">Limiar (<span id="thresholdVal">128</span>)</label>
-                            <input type="range" id="threshold" min="0" max="255" value="128" oninput="document.getElementById('thresholdVal').innerText=this.value; app.processImage();" class="w-full accent-indigo-500 bg-slate-800 rounded h-1">
-                        </div>
-                    </div>
-
-                    <!-- Sticker Outline Border -->
-                    <div class="bg-slate-800/40 p-2.5 rounded-lg border border-slate-800 space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-400"></i> Borda Contorno (Sticker Cut)
-                            </span>
-                            <input type="checkbox" id="enableBorder" checked onchange="app.processImage()" class="accent-indigo-600 w-4 h-4 rounded">
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] text-slate-400">Espessura:</span>
-                            <input type="range" id="borderSize" min="2" max="25" value="10" oninput="app.processImage()" class="flex-1 accent-indigo-500 bg-slate-700 rounded h-1">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECTION 4: A4 STANDARD INFO -->
-                <div class="space-y-1.5 pt-2 border-t border-slate-800">
-                    <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">4. Padrão A4 (300 DPI)</label>
-                    <div class="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700 text-xs space-y-1 text-slate-300">
-                        <div class="flex justify-between"><span>Tamanho:</span> <span class="font-mono text-indigo-400">21 x 29.7 cm</span></div>
-                        <div class="flex justify-between"><span>Resolução:</span> <span class="font-mono text-indigo-400">2480 x 3508 px</span></div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- SIDEBAR FOOTER EXPORTS -->
-            <div class="p-3 border-t border-slate-800 bg-slate-900 space-y-2">
-                <button onclick="app.downloadSVG()" id="btnDownloadSVG" disabled class="w-full py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 rounded-lg text-xs font-semibold transition border border-slate-700 flex items-center justify-center gap-2">
-                    <i data-lucide="download" class="w-4 h-4 text-indigo-400"></i> Baixar Vetor (.SVG)
-                </button>
-                <button onclick="app.downloadPNG()" id="btnDownloadPNG" disabled class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition shadow-md shadow-indigo-600/30 flex items-center justify-center gap-2">
-                    <i data-lucide="image" class="w-4 h-4"></i> Baixar Imagem Isolada (.PNG)
-                </button>
-            </div>
-        </aside>
-
-        <main class="flex-1 bg-slate-950 flex flex-col relative overflow-hidden">
-            
-            <!-- Workspace Bar -->
-            <div class="h-10 bg-slate-900/60 border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
-                <div class="flex items-center space-x-2 text-xs text-slate-400 truncate">
-                    <span id="workspaceStatus" class="font-medium text-slate-200 truncate">Aguardando cartela...</span>
-                    <span id="imageDimensions" class="bg-slate-800 px-2 py-0.5 rounded text-[10px] font-mono text-indigo-400 hidden sm:inline"></span>
-                </div>
-                <div class="flex items-center space-x-1 shrink-0">
-                    <button onclick="app.setZoom(0.8)" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="Zoom Out"><i data-lucide="zoom-out" class="w-4 h-4"></i></button>
-                    <span id="zoomLevel" class="text-xs font-mono text-slate-300 w-10 text-center">100%</span>
-                    <button onclick="app.setZoom(1.2)" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="Zoom In"><i data-lucide="zoom-in" class="w-4 h-4"></i></button>
-                    <button onclick="app.resetZoom()" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="Reset Zoom"><i data-lucide="maximize-2" class="w-4 h-4"></i></button>
-                </div>
-            </div>
-
-            <!-- Canvas Viewport Area -->
-            <div id="viewport" class="flex-1 overflow-auto flex items-center justify-center p-4 relative checkerboard">
-                
-                <!-- Initial Empty State Placeholder -->
-                <div id="emptyState" class="text-center max-w-sm p-6 bg-slate-900/95 border border-slate-800 rounded-2xl shadow-2xl backdrop-blur m-auto">
-                    <div class="w-14 h-14 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                        <i data-lucide="image-plus" class="w-7 h-7"></i>
-                    </div>
-                    <h3 class="text-sm font-semibold text-slate-100 mb-1">Envie sua Cartela ou Adesivos</h3>
-                    <p class="text-xs text-slate-400 mb-4 leading-relaxed">Carregue uma imagem em grade (estilo chaveiros ou adesivos) para processar, recortar e exportar.</p>
-                    <label class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold cursor-pointer shadow-lg shadow-indigo-600/30 transition">
-                        <i data-lucide="upload" class="w-4 h-4"></i> Selecionar Imagem
-                        <input type="file" accept="image/*" class="hidden" onchange="app.handleImageUpload(event)">
-                    </label>
-                </div>
-
-                <!-- A4 Simulation Container -->
-                <div id="canvasContainer" class="relative shadow-2xl transition-transform duration-200 origin-center" style="display: none;">
-                    <div class="bg-white rounded shadow-2xl overflow-hidden relative border border-slate-300" style="width: 450px; height: 636px;">
-                        <canvas id="mainCanvas" class="w-full h-full block cursor-crosshair"></canvas>
-                        <!-- Crop Box Overlay -->
-                        <div id="cropBox" style="display:none; border: 2px dashed #6366f1; background: rgba(99, 102, 241, 0.2); position: absolute; pointer-events: none;"></div>
-                    </div>
-                </div>
-
-            </div>
-        </main>
-
-        <aside class="w-72 bg-slate-900/95 border-l border-slate-800 flex flex-col shrink-0 lg:flex">
-            <div class="p-3.5 border-b border-slate-800 font-semibold text-xs text-slate-200 flex items-center justify-between">
-                <span class="flex items-center gap-2"><i data-lucide="eye" class="w-4 h-4 text-indigo-400"></i> Prévia em Tempo Real</span>
-                <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">HD Ready</span>
-            </div>
-
-            <div class="p-4 space-y-4 overflow-y-auto">
-                <div class="aspect-square bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center relative overflow-hidden checkerboard shadow-inner">
-                    <div id="previewContainer" class="w-full h-full flex items-center justify-center p-2">
-                        <span class="text-xs text-slate-500 text-center">Aguardando processamento...</span>
-                    </div>
-                </div>
-
-                <div class="space-y-1.5">
-                    <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">Status do Arquivo</label>
-                    <div class="bg-slate-800/60 p-3 rounded-lg border border-slate-800 space-y-1 text-xs text-slate-300">
-                        <div class="flex justify-between"><span>Modo Atual:</span> <span id="statMode" class="font-mono text-indigo-400">Ilustração</span></div>
-                        <div class="flex justify-between"><span>Contorno Branco:</span> <span id="statBorder" class="font-mono text-emerald-400">Ativado</span></div>
-                    </div>
-                </div>
-
-                <div class="bg-indigo-950/40 border border-indigo-900/50 p-3 rounded-xl space-y-1">
-                    <div class="flex items-center gap-1.5 text-indigo-400 font-semibold text-xs">
-                        <i data-lucide="help-circle" class="w-3.5 h-3.5"></i> Dica de Uso Mobile
-                    </div>
-                    <p class="text-[10px] text-slate-400 leading-relaxed">
-                        Use o botão "Recortar Item" para selecionar e isolar uma figura individualmente da sua cartela antes de exportar.
-                    </p>
-                </div>
-            </div>
-        </aside>
-
+  <!-- ================= HEADER ================= -->
+  <header class="shrink-0 bg-slate-900 border-b border-slate-800 px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 z-[60]">
+    <div class="flex items-center gap-2.5 min-w-0">
+      <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-md shadow-indigo-500/20 flex items-center justify-center shrink-0">
+        <i data-lucide="layers" class="w-4 h-4"></i>
+      </div>
+      <div class="min-w-0">
+        <h1 class="font-bold text-sm sm:text-base text-white tracking-tight flex items-center gap-1.5">
+          StickerStudio
+          <span class="text-[9px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full border border-indigo-500/30">A4 Pro</span>
+        </h1>
+        <p class="text-[11px] text-slate-400 hidden sm:block truncate">Vetorizador Inteligente &amp; Folhas A4 300 DPI</p>
+      </div>
     </div>
 
-    <script>
-        lucide.createIcons();
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button id="btnPreviewToggle" class="xl:hidden p-2 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg active:scale-95 transition">
+        <i data-lucide="eye" class="w-4 h-4"></i>
+      </button>
+      <button id="btnReset" class="p-2 sm:px-2.5 sm:py-1.5 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg text-xs font-medium active:scale-95 transition flex items-center gap-1">
+        <i data-lucide="rotate-ccw" class="w-4 h-4"></i><span class="hidden sm:inline">Limpar</span>
+      </button>
+      <button id="btnExportA4" disabled class="px-2.5 py-2 sm:py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 disabled:opacity-40 text-white rounded-lg text-xs font-semibold active:scale-95 transition shadow-md shadow-indigo-600/30 flex items-center gap-1.5">
+        <i data-lucide="printer" class="w-4 h-4"></i><span class="hidden sm:inline">Exportar A4</span><span class="sm:hidden">A4</span>
+      </button>
+      <button id="btnMenu" class="lg:hidden p-2 bg-indigo-600 text-white rounded-lg active:scale-95 transition">
+        <i data-lucide="menu" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
 
-        class StickerStudioApp {
-            constructor() {
-                this.image = null;
-                this.originalWidth = 0;
-                this.originalHeight = 0;
-                this.zoom = 1;
-                this.cropMode = false;
-                this.isDragging = false;
-                this.startX = 0;
-                this.startY = 0;
-                this.cropRect = { x: 0, y: 0, w: 0, h: 0 };
-                this.processedImageData = null;
-                this.vectorSvgString = '';
+  <!-- ================= CORPO ================= -->
+  <div class="flex-1 min-h-0 flex relative">
 
-                this.initListeners();
-            }
+    <!-- ---------- BACKDROP ---------- -->
+    <div id="backdrop" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40"></div>
 
-            initListeners() {
-                const dropZone = document.getElementById('dropZone');
-                const fileInput = document.getElementById('imageUpload');
+    <!-- ---------- SIDEBAR ---------- -->
+    <aside id="sidebar"
+      class="drawer fixed lg:static inset-y-0 left-0 z-50 w-[86%] max-w-[330px] lg:w-[320px] lg:max-w-none
+             bg-slate-900 border-r border-slate-800 flex flex-col
+             -translate-x-full lg:translate-x-0">
 
-                dropZone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    dropZone.classList.add('border-indigo-500', 'bg-slate-800');
-                });
+      <div class="p-3 border-b border-slate-800 flex items-center justify-between shrink-0">
+        <span class="flex items-center gap-2 text-xs font-semibold text-slate-200">
+          <i data-lucide="sliders-horizontal" class="w-4 h-4 text-indigo-400"></i> Painel de Controle
+        </span>
+        <div class="flex items-center gap-2">
+          <span id="stepIndicator" class="text-[10px] text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800/50 whitespace-nowrap">Passo 1</span>
+          <button data-close-drawer class="lg:hidden text-slate-400 hover:text-white p-1">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
 
-                dropZone.addEventListener('dragleave', () => {
-                    dropZone.classList.remove('border-indigo-500', 'bg-slate-800');
-                });
+      <div class="flex-1 overflow-y-auto overscroll-contain p-3.5 space-y-4">
 
-                dropZone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    dropZone.classList.remove('border-indigo-500', 'bg-slate-800');
-                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                        this.loadImageFile(e.dataTransfer.files[0]);
-                    }
-                });
+        <!-- 1. UPLOAD -->
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">1. Enviar Cartela</label>
+          <div id="dropZone" class="relative border-2 border-dashed border-slate-700 rounded-xl p-3 text-center bg-slate-800/40 group">
+            <input type="file" id="imageUpload" accept="image/*"
+                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+            <div class="flex flex-col items-center justify-center space-y-1 py-1 pointer-events-none">
+              <div class="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-full group-hover:scale-110 transition">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+              </div>
+              <div class="text-xs text-slate-300 font-medium">Toque para enviar imagem</div>
+              <div class="text-[10px] text-slate-500">PNG, JPG, WebP</div>
+            </div>
+          </div>
+        </div>
 
-                fileInput.addEventListener('change', (e) => {
-                    if (e.target.files && e.target.files[0]) {
-                        this.loadImageFile(e.target.files[0]);
-                    }
-                });
+        <!-- 2. RECORTE -->
+        <div class="space-y-2 pt-3 border-t border-slate-800">
+          <div class="flex items-center justify-between gap-2">
+            <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">2. Recorte</label>
+            <button id="btnToggleCrop" disabled
+              class="text-[11px] bg-slate-800 disabled:opacity-40 text-slate-300 px-2 py-1 rounded-md transition border border-slate-700 flex items-center gap-1 active:scale-95">
+              <i data-lucide="crop" class="w-3 h-3"></i> Recortar
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-400 leading-relaxed">
+            Ative o modo recorte e arraste sobre um único adesivo para isolá-lo.
+          </p>
+          <button id="btnApplyCrop"
+            class="hidden w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 active:scale-95">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i> Confirmar Recorte
+          </button>
+        </div>
 
-                const canvas = document.getElementById('mainCanvas');
-                
-                // Mouse & Touch events for crop box selection
-                canvas.addEventListener('mousedown', (e) => this.onStart(e.clientX, e.clientY));
-                canvas.addEventListener('mousemove', (e) => this.onMove(e.clientX, e.clientY));
-                canvas.addEventListener('mouseup', () => this.onEnd());
+        <!-- 3. TRATAMENTO -->
+        <div class="space-y-3 pt-3 border-t border-slate-800">
+          <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">3. Tratamento &amp; Estilo</label>
 
-                canvas.addEventListener('touchstart', (e) => {
-                    if(e.touches.length === 1) {
-                        this.onStart(e.touches[0].clientX, e.touches[0].clientY);
-                    }
-                });
-                canvas.addEventListener('touchmove', (e) => {
-                    if(e.touches.length === 1) {
-                        this.onMove(e.touches[0].clientX, e.touches[0].clientY);
-                    }
-                });
-                canvas.addEventListener('touchend', () => this.onEnd());
-            }
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Modo de Conversão</label>
+            <select id="vectorMode"
+              class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-indigo-500">
+              <option value="color">Redução de Cores (Ilustração)</option>
+              <option value="threshold">Preto e Branco (Linha)</option>
+              <option value="cartoon">Suavizado Estilizado (Cartoon)</option>
+            </select>
+          </div>
 
-            toggleMobileSidebar() {
-                const sidebar = document.getElementById('sidebar');
-                sidebar.classList.toggle('-translate-x-full');
-            }
+          <div id="rowColorCount">
+            <label class="text-[10px] text-slate-400 block mb-0.5">
+              Nº de Cores: <span id="colorCountVal" class="text-indigo-400 font-mono">8</span>
+            </label>
+            <input type="range" id="colorCount" min="2" max="24" value="8">
+          </div>
 
-            handleImageUpload(e) {
-                if (e.target.files && e.target.files[0]) {
-                    this.loadImageFile(e.target.files[0]);
-                }
-            }
+          <div id="rowThreshold" class="hidden">
+            <label class="text-[10px] text-slate-400 block mb-0.5">
+              Limiar: <span id="thresholdVal" class="text-indigo-400 font-mono">128</span>
+            </label>
+            <input type="range" id="threshold" min="0" max="255" value="128">
+          </div>
 
-            loadImageFile(file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        this.image = img;
-                        this.originalWidth = img.width;
-                        this.originalHeight = img.height;
-                        
-                        document.getElementById('emptyState').style.display = 'none';
-                        document.getElementById('canvasContainer').style.display = 'block';
-                        document.getElementById('btnToggleCrop').disabled = false;
-                        document.getElementById('btnDownloadSVG').disabled = false;
-                        document.getElementById('btnDownloadPNG').disabled = false;
-                        document.getElementById('stepIndicator').innerText = 'Passo 2: Processamento';
-                        document.getElementById('workspaceStatus').innerText = 'Cartela carregada com sucesso';
-                        document.getElementById('imageDimensions').innerText = `${img.width}x${img.height}px`;
+          <!-- Remover fundo -->
+          <div class="bg-slate-800/40 p-2.5 rounded-lg border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                <i data-lucide="eraser" class="w-3.5 h-3.5 text-indigo-400"></i> Remover fundo
+              </span>
+              <input type="checkbox" id="optRemoveBg" checked class="accent-indigo-600 w-4 h-4 rounded">
+            </div>
+            <div id="rowBgTol">
+              <label class="text-[10px] text-slate-400 block mb-0.5">
+                Tolerância: <span id="bgToleranceVal" class="text-indigo-400 font-mono">40</span>
+              </label>
+              <input type="range" id="bgTolerance" min="5" max="140" value="40">
+            </div>
+          </div>
 
-                        this.setupCanvas();
-                        this.processImage();
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
+          <!-- Borda sticker -->
+          <div class="bg-slate-800/40 p-2.5 rounded-lg border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-400"></i> Borda Contorno
+              </span>
+              <input type="checkbox" id="optBorder" checked class="accent-indigo-600 w-4 h-4 rounded">
+            </div>
+            <div id="rowBorderSize">
+              <label class="text-[10px] text-slate-400 block mb-0.5">
+                Espessura: <span id="borderSizeVal" class="text-indigo-400 font-mono">12</span>
+              </label>
+              <input type="range" id="borderSize" min="2" max="40" value="12">
+            </div>
+          </div>
+        </div>
 
-            setupCanvas() {
-                const canvas = document.getElementById('mainCanvas');
-                canvas.width = this.originalWidth;
-                canvas.height = this.originalHeight;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(this.image, 0, 0);
-            }
+        <!-- 4. INFO A4 -->
+        <div class="space-y-1.5 pt-3 border-t border-slate-800">
+          <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">4. Padrão A4</label>
+          <div class="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700 text-xs space-y-1 text-slate-300">
+            <div class="flex justify-between"><span>Tamanho:</span> <span class="font-mono text-indigo-400">21 × 29,7 cm</span></div>
+            <div class="flex justify-between"><span>Resolução:</span> <span class="font-mono text-indigo-400">2480 × 3508 px</span></div>
+            <div class="flex justify-between"><span>Densidade:</span> <span class="font-mono text-indigo-400">300 DPI</span></div>
+          </div>
+        </div>
 
-            processImage() {
-                if (!this.image) return;
+      </div>
 
-                const canvas = document.getElementById('mainCanvas');
-                const ctx = canvas.getContext('2d');
-                
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(this.image, 0, 0);
+      <!-- EXPORTS -->
+      <div class="p-3 border-t border-slate-800 bg-slate-900 shrink-0 space-y-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <button id="btnDownloadSVG" disabled
+          class="w-full py-2.5 bg-slate-800 disabled:opacity-40 text-slate-200 rounded-lg text-xs font-semibold transition border border-slate-700 flex items-center justify-center gap-2 active:scale-[.98]">
+          <i data-lucide="download" class="w-4 h-4 text-indigo-400"></i> Baixar Vetor (.SVG)
+        </button>
+        <button id="btnDownloadPNG" disabled
+          class="w-full py-2.5 bg-indigo-600 disabled:opacity-40 text-white rounded-lg text-xs font-semibold transition shadow-md shadow-indigo-600/30 flex items-center justify-center gap-2 active:scale-[.98]">
+          <i data-lucide="image" class="w-4 h-4"></i> Baixar PNG
+        </button>
+      </div>
+    </aside>
 
-                let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                let data = imgData.data;
+    <!-- ---------- MAIN ---------- -->
+    <main class="flex-1 min-w-0 flex flex-col relative">
 
-                const mode = document.getElementById('vectorMode').value;
-                const colorCount = parseInt(document.getElementById('colorCount').value);
-                const threshold = parseInt(document.getElementById('threshold').value);
-                const enableBorder = document.getElementById('enableBorder').checked;
-                const borderSize = parseInt(document.getElementById('borderSize').value);
+      <div class="h-10 shrink-0 bg-slate-900/60 border-b border-slate-800 px-3 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 text-xs min-w-0">
+          <span id="workspaceStatus" class="truncate text-slate-200 font-medium">Aguardando imagem…</span>
+          <span id="imageDimensions" class="hidden sm:inline bg-slate-800 px-2 py-0.5 rounded text-[10px] font-mono text-indigo-400 whitespace-nowrap"></span>
+        </div>
+        <div class="flex items-center gap-0.5 shrink-0">
+          <button id="btnZoomOut" class="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="Zoom -">
+            <i data-lucide="zoom-out" class="w-4 h-4"></i>
+          </button>
+          <span id="zoomLevel" class="text-xs font-mono text-slate-300 w-11 text-center">100%</span>
+          <button id="btnZoomIn" class="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="Zoom +">
+            <i data-lucide="zoom-in" class="w-4 h-4"></i>
+          </button>
+          <button id="btnZoomReset" class="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="Resetar zoom">
+            <i data-lucide="maximize-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
 
-                document.getElementById('statMode').innerText = mode === 'threshold' ? 'Preto/Branco' : (mode === 'smooth' ? 'Cartoon' : 'Cores Reduzidas');
-                document.getElementById('statBorder').innerText = enableBorder ? `${borderSize}px` : 'Desativado';
+      <div id="viewport" class="flex-1 min-h-0 overflow-auto checkerboard">
+        <div class="min-h-full min-w-full flex items-center justify-center p-3">
 
-                for (let i = 0; i < data.length; i += 4) {
-                    let r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
-                    if (a < 30) continue;
+          <!-- Empty state -->
+          <div id="emptyState" class="text-center max-w-sm p-6 bg-slate-900/95 border border-slate-800 rounded-2xl shadow-2xl backdrop-blur">
+            <div class="w-14 h-14 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <i data-lucide="image-plus" class="w-7 h-7"></i>
+            </div>
+            <h3 class="text-sm font-semibold text-slate-100 mb-1">Envie sua Cartela ou Adesivo</h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+              Carregue uma imagem, isole um item e exporte em PNG, SVG ou folha A4.
+            </p>
+            <label class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-semibold cursor-pointer shadow-lg shadow-indigo-600/30 active:scale-95 transition">
+              <i data-lucide="upload" class="w-4 h-4"></i> Selecionar Imagem
+              <input type="file" id="emptyFileInput" accept="image/*" class="hidden">
+            </label>
+          </div>
 
-                    if (mode === 'threshold') {
-                        let avg = (r + g + b) / 3;
-                        let val = avg > threshold ? 255 : 0;
-                        data[i] = val; data[i+1] = val; data[i+2] = val;
-                    } else if (mode === 'color') {
-                        let factor = Math.floor(256 / colorCount);
-                        data[i] = Math.floor(r / factor) * factor;
-                        data[i+1] = Math.floor(g / factor) * factor;
-                        data[i+2] = Math.floor(b / factor) * factor;
-                    } else if (mode === 'smooth') {
-                        data[i] = r > 127 ? 255 : 0;
-                        data[i+1] = g > 127 ? 255 : 0;
-                        data[i+2] = b > 127 ? 255 : 0;
-                    }
-                }
+          <!-- Palco -->
+          <div id="canvasContainer" class="relative shrink-0 shadow-2xl" style="display:none">
+            <canvas id="mainCanvas"></canvas>
+            <div id="cropBox" style="display:none"
+                 class="absolute border-2 border-dashed border-indigo-400 bg-indigo-500/20 pointer-events-none"></div>
+          </div>
 
-                ctx.putImageData(imgData, 0, 0);
+        </div>
+      </div>
+    </main>
 
-                if (enableBorder) {
-                    this.renderStickerBorder(ctx, canvas.width, canvas.height, borderSize);
-                }
+    <!-- ---------- PREVIEW (drawer no mobile / fixo no XL) ---------- -->
+    <aside id="previewPanel"
+      class="drawer fixed xl:static inset-y-0 right-0 z-50 w-[78%] max-w-[300px] xl:w-[280px] xl:max-w-none
+             bg-slate-900 border-l border-slate-800 flex flex-col translate-x-full xl:translate-x-0">
 
-                this.processedImageData = canvas.toDataURL('image/png');
-                this.updatePreview(this.processedImageData);
-                this.generateSVGString(canvas);
-            }
+      <div class="p-3 border-b border-slate-800 flex items-center justify-between shrink-0">
+        <span class="flex items-center gap-2 text-xs font-semibold text-slate-200">
+          <i data-lucide="eye" class="w-4 h-4 text-indigo-400"></i> Prévia
+        </span>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">HD</span>
+          <button data-close-drawer class="xl:hidden text-slate-400 hover:text-white p-1">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
 
-            renderStickerBorder(ctx, width, height, size) {
-                ctx.save();
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = size * 2;
-                ctx.lineJoin = 'round';
-                ctx.lineCap = 'round';
-                ctx.drawImage(this.image, 0, 0);
-                ctx.restore();
-            }
+      <div class="p-4 space-y-4 overflow-y-auto overscroll-contain">
+        <div id="previewBox"
+             class="aspect-square bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center overflow-hidden checkerboard shadow-inner">
+          <canvas id="previewCanvas" class="max-w-full max-h-full"></canvas>
+        </div>
 
-            updatePreview(dataUrl) {
-                const container = document.getElementById('previewContainer');
-                container.innerHTML = `<img src="${dataUrl}" class="max-w-full max-h-full object-contain drop-shadow-md">`;
-            }
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">Status</label>
+          <div class="bg-slate-800/60 p-3 rounded-lg border border-slate-800 space-y-1.5 text-xs text-slate-300">
+            <div class="flex justify-between gap-2"><span>Modo:</span> <span id="statMode" class="font-mono text-indigo-400 text-right">—</span></div>
+            <div class="flex justify-between gap-2"><span>Contorno:</span> <span id="statBorder" class="font-mono text-emerald-400 text-right">—</span></div>
+            <div class="flex justify-between gap-2"><span>Saída:</span> <span id="statSize" class="font-mono text-indigo-400 text-right">—</span></div>
+          </div>
+        </div>
 
-            generateSVGString(canvas) {
-                const dataUrl = canvas.toDataURL('image/png');
-                this.vectorSvgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${canvas.width} ${canvas.height}" width="100%" height="100%">
-    <g id="sticker-item">
-        <image href="${dataUrl}" width="${canvas.width}" height="${canvas.height}" />
-    </g>
-</svg>`;
-            }
+        <div class="bg-indigo-950/40 border border-indigo-900/50 p-3 rounded-xl space-y-1">
+          <div class="flex items-center gap-1.5 text-indigo-400 font-semibold text-xs">
+            <i data-lucide="help-circle" class="w-3.5 h-3.5"></i> Dica
+          </div>
+          <p class="text-[10px] text-slate-400 leading-relaxed">
+            Para melhores resultados, ative <b class="text-slate-300">Remover fundo</b> antes de gerar a borda branca do sticker.
+          </p>
+        </div>
+      </div>
+    </aside>
 
-            toggleCropMode() {
-                this.cropMode = !this.cropMode;
-                const btn = document.getElementById('btnToggleCrop');
-                const cropBox = document.getElementById('cropBox');
-                if (this.cropMode) {
-                    btn.classList.add('bg-indigo-600', 'text-white');
-                    cropBox.style.display = 'block';
-                    document.getElementById('workspaceStatus').innerText = 'Modo Recorte: Arraste sobre o adesivo';
-                } else {
-                    btn.classList.remove('bg-indigo-600', 'text-white');
-                    cropBox.style.display = 'none';
-                    document.getElementById('workspaceStatus').innerText = 'Cartela Completa';
-                }
-            }
+  </div>
+</div>
 
-            onStart(clientX, clientY) {
-                if (!this.cropMode) return;
-                this.isDragging = true;
-                const canvas = document.getElementById('mainCanvas');
-                const rect = canvas.getBoundingClientRect();
-                this.startX = clientX - rect.left;
-                this.startY = clientY - rect.top;
-                
-                this.cropRect.x = this.startX;
-                this.cropRect.y = this.startY;
-                this.cropRect.w = 0;
-                this.cropRect.h = 0;
-            }
+<script>
+(() => {
+  'use strict';
 
-            onMove(clientX, clientY) {
-                if (!this.isDragging || !this.cropMode) return;
-                const canvas = document.getElementById('mainCanvas');
-                const rect = canvas.getBoundingClientRect();
-                let currentX = clientX - rect.left;
-                let currentY = clientY - rect.top;
+  const MAX_WORK = 1600;   // resolução máxima de trabalho (px no maior lado)
+  const MAX_SVG  = 900;    // resolução máxima usada na vetorização
+  const $ = (id) => document.getElementById(id);
 
-                let width = currentX - this.startX;
-                let height = currentY - this.startY;
+  class StickerStudioApp {
+    constructor() {
+      this.source = null;        // canvas com a imagem de trabalho (original)
+      this.processed = null;     // canvas processado (com borda)
+      this.lastPad = 0;          // padding aplicado pela borda
+      this.zoom = 1;
+      this.cropMode = false;
+      this.dragging = false;
+      this.cropRect = { x: 0, y: 0, w: 0, h: 0 };
+      this._raf = null;
 
-                let left = width < 0 ? currentX : this.startX;
-                let top = height < 0 ? currentY : this.startY;
+      this.dom = {
+        viewport: $('viewport'),
+        container: $('canvasContainer'),
+        canvas: $('mainCanvas'),
+        cropBox: $('cropBox'),
+        previewBox: $('previewBox'),
+        previewCanvas: $('previewCanvas'),
+        sidebar: $('sidebar'),
+        previewPanel: $('previewPanel'),
+        backdrop: $('backdrop'),
+      };
 
-                const cropBox = document.getElementById('cropBox');
-                cropBox.style.left = left + 'px';
-                cropBox.style.top = top + 'px';
-                cropBox.style.width = Math.abs(width) + 'px';
-                cropBox.style.height = Math.abs(height) + 'px';
+      this.bind();
+      lucide.createIcons();
+    }
 
-                this.cropRect = { x: left, y: top, w: Math.abs(width), h: Math.abs(height) };
-                if (this.cropRect.w > 15 && this.cropRect.h > 15) {
-                    document.getElementById('btnApplyCrop').style.display = 'flex';
-                }
-            }
+    /* ============================ EVENTOS ============================ */
+    bind() {
+      // Upload
+      $('imageUpload').addEventListener('change', e => {
+        if (e.target.files && e.target.files[0]) this.loadFile(e.target.files[0]);
+        e.target.value = '';
+      });
+      $('emptyFileInput').addEventListener('change', e => {
+        if (e.target.files && e.target.files[0]) this.loadFile(e.target.files[0]);
+        e.target.value = '';
+      });
 
-            onEnd() {
-                if (!this.cropMode) return;
-                this.isDragging = false;
-            }
+      const dz = $('dropZone');
+      dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('border-indigo-500'); });
+      dz.addEventListener('dragleave', () => dz.classList.remove('border-indigo-500'));
+      dz.addEventListener('drop', e => {
+        e.preventDefault();
+        dz.classList.remove('border-indigo-500');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) this.loadFile(e.dataTransfer.files[0]);
+      });
 
-            applyCrop() {
-                if (this.cropRect.w < 10 || this.cropRect.h < 10) return;
-                
-                const canvas = document.getElementById('mainCanvas');
-                const ctx = canvas.getContext('2d');
-                
-                const displayWidth = canvas.clientWidth;
-                const displayHeight = canvas.clientHeight;
-                const scaleX = canvas.width / displayWidth;
-                const scaleY = canvas.height / displayHeight;
+      // Controles
+      $('vectorMode').addEventListener('change', () => { this.syncModeUI(); this.render(); });
+      $('optBorder').addEventListener('change', () => this.render());
+      $('optRemoveBg').addEventListener('change', () => { this.syncModeUI(); this.render(); });
 
-                let realX = this.cropRect.x * scaleX;
-                let realY = this.cropRect.y * scaleY;
-                let realW = this.cropRect.w * scaleX;
-                let realH = this.cropRect.h * scaleY;
+      ['colorCount', 'threshold', 'borderSize', 'bgTolerance'].forEach(id => {
+        const el = $(id), out = $(id + 'Val');
+        const upd = () => { if (out) out.textContent = el.value; };
+        el.addEventListener('input', () => { upd(); this.scheduleProcess(); });
+        upd();
+      });
 
-                let croppedData = ctx.getImageData(realX, realY, realW, realH);
+      // Zoom
+      $('btnZoomIn').addEventListener('click', () => this.setZoom(1.25));
+      $('btnZoomOut').addEventListener('click', () => this.setZoom(0.8));
+      $('btnZoomReset').addEventListener('click', () => this.setZoom(null));
 
-                canvas.width = realW;
-                canvas.height = realH;
-                ctx.putImageData(croppedData, 0, 0);
+      // Ações
+      $('btnReset').addEventListener('click', () => this.reset());
+      $('btnExportA4').addEventListener('click', () => this.exportA4());
+      $('btnDownloadPNG').addEventListener('click', () => this.downloadPNG());
+      $('btnDownloadSVG').addEventListener('click', () => this.downloadSVG());
+      $('btnToggleCrop').addEventListener('click', () => this.toggleCrop());
+      $('btnApplyCrop').addEventListener('click', () => this.applyCrop());
 
-                let newImg = new Image();
-                newImg.onload = () => {
-                    this.image = newImg;
-                    this.originalWidth = newImg.width;
-                    this.originalHeight = newImg.height;
-                    this.toggleCropMode();
-                    document.getElementById('btnApplyCrop').style.display = 'none';
-                    document.getElementById('workspaceStatus').innerText = 'Adesivo recortado com sucesso!';
-                    this.processImage();
-                };
-                newImg.src = canvas.toDataURL();
-            }
+      // Drawers
+      $('btnMenu').addEventListener('click', () => this.openDrawer('sidebar'));
+      $('btnPreviewToggle').addEventListener('click', () => this.openDrawer('preview'));
+      this.dom.backdrop.addEventListener('click', () => this.closeDrawers());
+      document.querySelectorAll('[data-close-drawer]').forEach(b =>
+        b.addEventListener('click', () => this.closeDrawers()));
 
-            setZoom(factor) {
-                this.zoom *= factor;
-                this.updateZoomTransform();
-            }
+      // Crop: pointer events (funciona em mouse e toque)
+      const cv = this.dom.canvas;
+      cv.addEventListener('pointerdown', e => this.onPointerDown(e));
+      cv.addEventListener('pointermove', e => this.onPointerMove(e));
+      cv.addEventListener('pointerup', e => this.onPointerUp(e));
+      cv.addEventListener('pointercancel', e => this.onPointerUp(e));
 
-            resetZoom() {
-                this.zoom = 1;
-                this.updateZoomTransform();
-            }
+      window.addEventListener('resize', () => {
+        this.updateDisplaySize();
+        this.updatePreview();
+      });
+      window.addEventListener('orientationchange', () => setTimeout(() => {
+        this.updateDisplaySize();
+        this.updatePreview();
+      }, 250));
+    }
 
-            updateZoomTransform() {
-                const container = document.getElementById('canvasContainer');
-                container.style.transform = `scale(${this.zoom})`;
-                document.getElementById('zoomLevel').innerText = Math.round(this.zoom * 100) + '%';
-            }
+    /* ============================ DRAWERS ============================ */
+    openDrawer(which) {
+      this.closeDrawers(true);
+      const el = which === 'sidebar' ? this.dom.sidebar : this.dom.previewPanel;
+      el.classList.remove(which === 'sidebar' ? '-translate-x-full' : 'translate-x-full');
+      el.classList.add('translate-x-0');
+      this.dom.backdrop.classList.remove('hidden');
+    }
+    closeDrawers(keepBackdrop) {
+      this.dom.sidebar.classList.add('-translate-x-full');
+      this.dom.sidebar.classList.remove('translate-x-0');
+      this.dom.previewPanel.classList.add('translate-x-full');
+      this.dom.previewPanel.classList.remove('translate-x-0');
+      if (!keepBackdrop) this.dom.backdrop.classList.add('hidden');
+      // repinta a prévia (o painel pode ter ganho dimensões)
+      setTimeout(() => this.updatePreview(), 320);
+    }
 
-            downloadSVG() {
-                if (!this.vectorSvgString) return;
-                const blob = new Blob([this.vectorSvgString], { type: 'image/svg+xml;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'sticker-vector.svg';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }
+    /* ============================ UPLOAD ============================ */
+    loadFile(file) {
+      if (!file.type.startsWith('image/')) { alert('Selecione um arquivo de imagem.'); return; }
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
 
-            downloadPNG() {
-                if (!this.processedImageData) return;
-                const a = document.createElement('a');
-                a.href = this.processedImageData;
-                a.download = 'sticker-isolated-hd.png';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            }
+        let w = img.naturalWidth || img.width;
+        let h = img.naturalHeight || img.height;
+        const scale = Math.min(1, MAX_WORK / Math.max(w, h));
+        w = Math.max(1, Math.round(w * scale));
+        h = Math.max(1, Math.round(h * scale));
 
-            exportA4Sheet() {
-                if (!this.processedImageData) {
-                    alert('Nenhuma imagem carregada para exportar.');
-                    return;
-                }
-                const a4Canvas = document.createElement('canvas');
-                a4Canvas.width = 2480; // 300 DPI A4 Width
-                a4Canvas.height = 3508; // 300 DPI A4 Height
-                const ctx = a4Canvas.getContext('2d');
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d', { willReadFrequently: true });
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, w, h);
 
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, a4Canvas.width, a4Canvas.height);
+        this.source = c;
+        this.zoom = 1;
 
-                const img = new Image();
-                img.onload = () => {
-                    const margin = 180;
-                    const maxW = a4Canvas.width - (margin * 2);
-                    const maxH = a4Canvas.height - (margin * 2);
-                    
-                    let w = img.width;
-                    let h = img.height;
-                    let ratio = Math.min(maxW / w, maxH / h);
-                    let targetW = w * ratio;
-                    let targetH = h * ratio;
-                    let x = (a4Canvas.width - targetW) / 2;
-                    let y = (a4Canvas.height - targetH) / 2;
+        $('emptyState').style.display = 'none';
+        this.dom.container.style.display = 'block';
+        $('btnToggleCrop').disabled = false;
+        $('btnDownloadSVG').disabled = false;
+        $('btnDownloadPNG').disabled = false;
+        $('btnExportA4').disabled = false;
+        $('stepIndicator').textContent = 'Passo 2';
+        $('workspaceStatus').textContent = 'Imagem carregada';
+        $('imageDimensions').textContent = `${w}×${h}px`;
+        $('zoomLevel').textContent = '100%';
 
-                    ctx.drawImage(img, x, y, targetW, targetH);
+        this.render();
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); alert('Não foi possível ler esta imagem.'); };
+      img.src = url;
+    }
 
-                    const dataUrl = a4Canvas.toDataURL('image/png', 1.0);
-                    const a = document.createElement('a');
-                    a.href = dataUrl;
-                    a.download = 'folha-a4-300dpi.png';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                };
-                img.src = this.processedImageData;
-            }
+    /* ============================ UI SYNC ============================ */
+    syncModeUI() {
+      const mode = $('vectorMode').value;
+      $('rowColorCount').classList.toggle('hidden', mode === 'threshold');
+      $('rowThreshold').classList.toggle('hidden', mode !== 'threshold');
 
-            resetWorkspace() {
-                this.image = null;
-                this.processedImageData = null;
-                this.vectorSvgString = '';
-                document.getElementById('emptyState').style.display = 'block';
-                document.getElementById('canvasContainer').style.display = 'none';
-                document.getElementById('btnToggleCrop').disabled = true;
-                document.getElementById('btnDownloadSVG').disabled = true;
-                document.getElementById('btnDownloadPNG').disabled = true;
-                document.getElementById('stepIndicator').innerText = 'Passo 1: Upload';
-                document.getElementById('workspaceStatus').innerText = 'Aguardando cartela...';
-                document.getElementById('imageDimensions').innerText = '';
-                document.getElementById('previewContainer').innerHTML = '<span class="text-xs text-slate-500 text-center">Aguardando processamento...</span>';
-            }
+      const noBg = !$('optRemoveBg').checked;
+      $('rowBgTol').style.opacity = noBg ? '.35' : '1';
+      $('rowBgTol').style.pointerEvents = noBg ? 'none' : 'auto';
+
+      const noBorder = !$('optBorder').checked;
+      $('rowBorderSize').style.opacity = noBorder ? '.35' : '1';
+      $('rowBorderSize').style.pointerEvents = noBorder ? 'none' : 'auto';
+    }
+
+    /* ============================ RENDER ============================ */
+    scheduleProcess() {
+      if (this._raf) return;
+      this._raf = requestAnimationFrame(() => {
+        this._raf = null;
+        this.render();
+      });
+    }
+
+    render() {
+      if (!this.source) return;
+      this.processed = this.processImage();
+
+      const cv = this.dom.canvas;
+      if (cv.width !== this.processed.width) cv.width = this.processed.width;
+      if (cv.height !== this.processed.height) cv.height = this.processed.height;
+
+      const ctx = cv.getContext('2d');
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(this.processed, 0, 0);
+
+      this.updateDisplaySize();
+      this.updatePreview();
+      this.updateStats();
+    }
+
+    updateDisplaySize() {
+      if (!this.source) return;
+      const vp = this.dom.viewport;
+      const availW = Math.max(80, vp.clientWidth - 24);
+      const availH = Math.max(80, vp.clientHeight - 24);
+      const aspect = this.source.width / this.source.height;
+
+      let cw = availW, ch = cw / aspect;
+      if (ch > availH) { ch = availH; cw = ch * aspect; }
+
+      cw *= this.zoom; ch *= this.zoom;
+
+      this.dom.container.style.width = Math.round(cw) + 'px';
+      this.dom.container.style.height = Math.round(ch) + 'px';
+      this.dom.canvas.style.width = '100%';
+      this.dom.canvas.style.height = '100%';
+    }
+
+    updatePreview() {
+      if (!this.processed) return;
+      const box = this.dom.previewBox;
+      const cv = this.dom.previewCanvas;
+      const maxW = box.clientWidth - 8;
+      const maxH = box.clientHeight - 8;
+      if (maxW <= 0 || maxH <= 0) return;
+
+      const s = Math.min(maxW / this.processed.width, maxH / this.processed.height);
+      cv.width = Math.max(1, Math.round(this.processed.width * s));
+      cv.height = Math.max(1, Math.round(this.processed.height * s));
+      const ctx = cv.getContext('2d');
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(this.processed, 0, 0, cv.width, cv.height);
+    }
+
+    updateStats() {
+      const mode = $('vectorMode').value;
+      $('statMode').textContent = mode === 'threshold' ? 'P&B'
+        : mode === 'cartoon' ? 'Cartoon' : 'Ilustração';
+      $('statBorder').textContent = $('optBorder').checked
+        ? ($('borderSize').value + 'px') : 'Desligado';
+      $('statSize').textContent = this.processed
+        ? `${this.processed.width}×${this.processed.height}` : '—';
+    }
+
+    /* ======================= PIPELINE DE IMAGEM ======================= */
+    processImage() {
+      const src = this.source;
+      const w = src.width, h = src.height;
+      const sctx = src.getContext('2d', { willReadFrequently: true });
+      const srcData = sctx.getImageData(0, 0, w, h);
+
+      const work = new Uint8ClampedArray(srcData.data);
+
+      if ($('optRemoveBg').checked) {
+        this.floodRemoveBackground(work, w, h, parseInt($('bgTolerance').value, 10));
+      }
+
+      const mode = $('vectorMode').value;
+      const nColors = parseInt($('colorCount').value, 10);
+
+      if (mode === 'threshold') {
+        const t = parseInt($('threshold').value, 10);
+        for (let i = 0; i < work.length; i += 4) {
+          if (work[i + 3] < 8) { work[i + 3] = 0; continue; }
+          const lum = 0.299 * work[i] + 0.587 * work[i + 1] + 0.114 * work[i + 2];
+          const v = lum > t ? 255 : 0;
+          work[i] = work[i + 1] = work[i + 2] = v;
+          work[i + 3] = 255;
+        }
+      } else {
+        if (mode === 'cartoon') this.boxBlur(work, w, h, 2);
+        this.quantizeInPlace(work, w, h, nColors);
+      }
+
+      const out = document.createElement('canvas');
+      out.width = w; out.height = h;
+      out.getContext('2d').putImageData(new ImageData(work, w, h), 0, 0);
+
+      if ($('optBorder').checked) {
+        const r = parseInt($('borderSize').value, 10);
+        this.lastPad = Math.ceil(r) + 2;
+        return this.applyStickerBorder(out, r);
+      }
+      this.lastPad = 0;
+      return out;
+    }
+
+    /* ---- Remoção de fundo por flood fill a partir das bordas ---- */
+    floodRemoveBackground(data, w, h, tol) {
+      const n = w * h;
+
+      // cor de referência = média dos 4 cantos
+      const corners = [0, w - 1, (h - 1) * w, n - 1];
+      let br = 0, bg = 0, bb = 0;
+      for (const c of corners) { br += data[c * 4]; bg += data[c * 4 + 1]; bb += data[c * 4 + 2]; }
+      br /= 4; bg /= 4; bb /= 4;
+
+      const tol2 = tol * tol * 3;
+      const visited = new Uint8Array(n);
+      const stack = new Int32Array(n);
+      let sp = 0;
+
+      const match = (p) => {
+        const o = p * 4;
+        if (data[o + 3] < 8) return true;
+        const dr = data[o] - br, dg = data[o + 1] - bg, db = data[o + 2] - bb;
+        return (dr * dr + dg * dg + db * db) <= tol2;
+      };
+
+      const seed = (p) => { if (!visited[p] && match(p)) { visited[p] = 1; stack[sp++] = p; } };
+
+      for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
+      for (let y = 0; y < h; y++) { seed(y * w); seed(y * w + w - 1); }
+
+      while (sp > 0) {
+        const p = stack[--sp];
+        const x = p % w;
+        const y = (p - x) / w;
+        if (x > 0)     { const q = p - 1; if (!visited[q] && match(q)) { visited[q] = 1; stack[sp++] = q; } }
+        if (x < w - 1) { const q = p + 1; if (!visited[q] && match(q)) { visited[q] = 1; stack[sp++] = q; } }
+        if (y > 0)     { const q = p - w; if (!visited[q] && match(q)) { visited[q] = 1; stack[sp++] = q; } }
+        if (y < h - 1) { const q = p + w; if (!visited[q] && match(q)) { visited[q] = 1; stack[sp++] = q; } }
+      }
+
+      for (let p = 0; p < n; p++) if (visited[p]) data[p * 4 + 3] = 0;
+    }
+
+    /* ---- Blur separável (para modo cartoon) ---- */
+    boxBlur(data, w, h, r) {
+      const tmp = new Uint8ClampedArray(data.length);
+      const win = r * 2 + 1;
+
+      for (let y = 0; y < h; y++) {
+        const row = y * w;
+        let rs = 0, gs = 0, bs = 0;
+        for (let x = -r; x <= r; x++) {
+          const p = (row + Math.min(w - 1, Math.max(0, x))) * 4;
+          rs += data[p]; gs += data[p + 1]; bs += data[p + 2];
+        }
+        for (let x = 0; x < w; x++) {
+          const p = (row + x) * 4;
+          tmp[p] = rs / win; tmp[p + 1] = gs / win; tmp[p + 2] = bs / win; tmp[p + 3] = data[p + 3];
+          const pa = (row + Math.min(w - 1, x + r + 1)) * 4;
+          const pr = (row + Math.max(0, x - r)) * 4;
+          rs += data[pa] - data[pr];
+          gs += data[pa + 1] - data[pr + 1];
+          bs += data[pa + 2] - data[pr + 2];
+        }
+      }
+
+      for (let x = 0; x < w; x++) {
+        let rs = 0, gs = 0, bs = 0;
+        for (let y = -r; y <= r; y++) {
+          const p = (Math.min(h - 1, Math.max(0, y)) * w + x) * 4;
+          rs += tmp[p]; gs += tmp[p + 1]; bs += tmp[p + 2];
+        }
+        for (let y = 0; y < h; y++) {
+          const p = (y * w + x) * 4;
+          data[p] = rs / win; data[p + 1] = gs / win; data[p + 2] = bs / win;
+          const pa = (Math.min(h - 1, y + r + 1) * w + x) * 4;
+          const pr = (Math.max(0, y - r) * w + x) * 4;
+          rs += tmp[pa] - tmp[pr];
+          gs += tmp[pa + 1] - tmp[pr + 1];
+          bs += tmp[pa + 2] - tmp[pr + 2];
+        }
+      }
+    }
+
+    /* ---- Quantização por Median Cut + LUT 15-bit ---- */
+    quantizeInPlace(data, w, h, maxColors) {
+      maxColors = Math.max(2, Math.min(32, maxColors | 0));
+      const n = w * h;
+
+      const hist = new Uint32Array(32768);
+      for (let p = 0; p < n; p++) {
+        const i = p * 4;
+        if (data[i + 3] < 8) continue;
+        hist[((data[i] >> 3) << 10) | ((data[i + 1] >> 3) << 5) | (data[i + 2] >> 3)]++;
+      }
+
+      const bins = [];
+      for (let k = 0; k < 32768; k++) {
+        if (!hist[k]) continue;
+        bins.push({
+          r: (((k >> 10) & 31) << 3) + 4,
+          g: (((k >> 5) & 31) << 3) + 4,
+          b: ((k & 31) << 3) + 4,
+          n: hist[k]
+        });
+      }
+      if (bins.length === 0) return;
+
+      // Median cut
+      let boxes = [bins];
+      while (boxes.length < maxColors) {
+        let bestIdx = -1, bestScore = -1, bestChan = 0;
+
+        for (let i = 0; i < boxes.length; i++) {
+          const box = boxes[i];
+          if (box.length < 2) continue;
+
+          let rmin = 255, rmax = 0, gmin = 255, gmax = 0, bmin = 255, bmax = 0;
+          for (const c of box) {
+            if (c.r < rmin) rmin = c.r; if (c.r > rmax) rmax = c.r;
+            if (c.g < gmin) gmin = c.g; if (c.g > gmax) gmax = c.g;
+            if (c.b < bmin) bmin = c.b; if (c.b > bmax) bmax = c.b;
+          }
+          const dr = rmax - rmin, dg = gmax - gmin, db = bmax - bmin;
+          const chan = (dr >= dg && dr >= db) ? 0 : (dg >= db ? 1 : 2);
+          const range = [dr, dg, db][chan];
+          const score = range * Math.log(box.length + 1);
+          if (score > bestScore) { bestScore = score; bestIdx = i; bestChan = chan; }
+        }
+        if (bestIdx < 0) break;
+
+        const box = boxes[bestIdx];
+        const key = ['r', 'g', 'b'][bestChan];
+        box.sort((a, b) => a[key] - b[key]);
+
+        let total = 0;
+        for (const c of box) total += c.n;
+        let acc = 0, split = 1;
+        for (let i = 0; i < box.length; i++) {
+          acc += box[i].n;
+          if (acc >= total / 2) { split = Math.min(Math.max(1, i + 1), box.length - 1); break; }
+        }
+        boxes.splice(bestIdx, 1, box.slice(0, split), box.slice(split));
+      }
+
+      const palette = boxes.map(box => {
+        let r = 0, g = 0, b = 0, tot = 0;
+        for (const c of box) { r += c.r * c.n; g += c.g * c.n; b += c.b * c.n; tot += c.n; }
+        tot = tot || 1;
+        return [Math.round(r / tot), Math.round(g / tot), Math.round(b / tot)];
+      });
+
+      // LUT de 32768 entradas
+      const lut = new Uint8Array(32768);
+      for (let k = 0; k < 32768; k++) {
+        const r = (((k >> 10) & 31) << 3) + 4;
+        const g = (((k >> 5) & 31) << 3) + 4;
+        const b = ((k & 31) << 3) + 4;
+        let best = 0, bd = Infinity;
+        for (let i = 0; i < palette.length; i++) {
+          const dr = r - palette[i][0], dg = g - palette[i][1], db = b - palette[i][2];
+          const d = dr * dr + dg * dg + db * db;
+          if (d < bd) { bd = d; best = i; }
+        }
+        lut[k] = best;
+      }
+
+      for (let p = 0; p < n; p++) {
+        const i = p * 4;
+        if (data[i + 3] < 8) { data[i + 3] = 0; continue; }
+        const k = ((data[i] >> 3) << 10) | ((data[i + 1] >> 3) << 5) | (data[i + 2] >> 3);
+        const c = palette[lut[k]];
+        data[i] = c[0]; data[i + 1] = c[1]; data[i + 2] = c[2];
+        data[i + 3] = 255;
+      }
+    }
+
+    /* ---- Borda de sticker (dilatação via distance transform) ---- */
+    applyStickerBorder(canvas, radius) {
+      radius = Math.max(1, Math.min(40, radius));
+      const pad = Math.ceil(radius) + 2;
+      const w = canvas.width + pad * 2;
+      const h = canvas.height + pad * 2;
+
+      const tmp = document.createElement('canvas');
+      tmp.width = w; tmp.height = h;
+      const tctx = tmp.getContext('2d', { willReadFrequently: true });
+      tctx.drawImage(canvas, pad, pad);
+
+      const img = tctx.getImageData(0, 0, w, h);
+      const d = img.data;
+      const N = w * h;
+      const INF = 1e9;
+
+      const dist = new Float32Array(N);
+      for (let i = 0; i < N; i++) dist[i] = d[i * 4 + 3] >= 100 ? 0 : INF;
+
+      const D1 = 1, D2 = 1.41421356;
+
+      // Passo forward
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const i = y * w + x;
+          let v = dist[i];
+          if (v === 0) continue;
+          if (x > 0)          { const t = dist[i - 1] + D1;     if (t < v) v = t; }
+          if (y > 0)          { const t = dist[i - w] + D1;     if (t < v) v = t; }
+          if (x > 0 && y > 0) { const t = dist[i - w - 1] + D2; if (t < v) v = t; }
+          if (x < w - 1 && y > 0) { const t = dist[i - w + 1] + D2; if (t < v) v = t; }
+          dist[i] = v;
+        }
+      }
+      // Passo backward
+      for (let y = h - 1; y >= 0; y--) {
+        for (let x = w - 1; x >= 0; x--) {
+          const i = y * w + x;
+          let v = dist[i];
+          if (v === 0) continue;
+          if (x < w - 1)          { const t = dist[i + 1] + D1;     if (t < v) v = t; }
+          if (y < h - 1)          { const t = dist[i + w] + D1;     if (t < v) v = t; }
+          if (x < w - 1 && y < h - 1) { const t = dist[i + w + 1] + D2; if (t < v) v = t; }
+          if (x > 0 && y < h - 1)     { const t = dist[i + w - 1] + D2; if (t < v) v = t; }
+          dist[i] = v;
+        }
+      }
+
+      const border = document.createElement('canvas');
+      border.width = w; border.height = h;
+      const bctx = border.getContext('2d');
+      const bimg = bctx.createImageData(w, h);
+      const bd = bimg.data;
+      const r = radius;
+
+      for (let i = 0; i < N; i++) {
+        const dd = dist[i];
+        if (dd > r + 1) continue;
+        let a = r + 0.5 - dd;
+        if (a <= 0) continue;
+        if (a > 1) a = 1;
+        const o = i * 4;
+        bd[o] = 255; bd[o + 1] = 255; bd[o + 2] = 255;
+        bd[o + 3] = Math.round(a * 255);
+      }
+      bctx.putImageData(bimg, 0, 0);
+
+      const out = document.createElement('canvas');
+      out.width = w; out.height = h;
+      const octx = out.getContext('2d');
+      octx.drawImage(border, 0, 0);
+      octx.drawImage(tmp, 0, 0);
+      return out;
+    }
+
+    /* ============================ CROP ============================ */
+    toggleCrop() {
+      if (!this.source) return;
+      this.cropMode = !this.cropMode;
+
+      const btn = $('btnToggleCrop');
+      const cv = this.dom.canvas;
+
+      if (this.cropMode) {
+        btn.classList.add('bg-indigo-600', 'text-white', 'border-indigo-500');
+        cv.classList.add('cropping');
+        this.dom.cropBox.style.display = 'block';
+        this.dom.cropBox.style.width = '0px';
+        this.dom.cropBox.style.height = '0px';
+        $('workspaceStatus').textContent = 'Arraste sobre o adesivo desejado';
+        $('stepIndicator').textContent = 'Recortando';
+        // fecha o drawer para liberar a tela
+        this.closeDrawers();
+      } else {
+        btn.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-500');
+        cv.classList.remove('cropping');
+        this.dom.cropBox.style.display = 'none';
+        $('btnApplyCrop').classList.add('hidden');
+        $('workspaceStatus').textContent = 'Imagem completa';
+        $('stepIndicator').textContent = 'Passo 2';
+      }
+    }
+
+    getCanvasPoint(e) {
+      const rect = this.dom.canvas.getBoundingClientRect();
+      return {
+        x: Math.min(Math.max(e.clientX - rect.left, 0), rect.width),
+        y: Math.min(Math.max(e.clientY - rect.top, 0), rect.height),
+        rect
+      };
+    }
+
+    onPointerDown(e) {
+      if (!this.cropMode) return;
+      e.preventDefault();
+      const p = this.getCanvasPoint(e);
+      this.dragging = true;
+      this.startX = p.x;
+      this.startY = p.y;
+      this.cropRect = { x: p.x, y: p.y, w: 0, h: 0 };
+      try { this.dom.canvas.setPointerCapture(e.pointerId); } catch (_) {}
+      this.updateCropBox();
+    }
+
+    onPointerMove(e) {
+      if (!this.dragging || !this.cropMode) return;
+      e.preventDefault();
+      const p = this.getCanvasPoint(e);
+      const w = p.x - this.startX;
+      const h = p.y - this.startY;
+      this.cropRect = {
+        x: w < 0 ? p.x : this.startX,
+        y: h < 0 ? p.y : this.startY,
+        w: Math.abs(w),
+        h: Math.abs(h)
+      };
+      this.updateCropBox();
+    }
+
+    onPointerUp(e) {
+      if (!this.dragging) return;
+      this.dragging = false;
+      if (this.cropRect.w > 16 && this.cropRect.h > 16) {
+        $('btnApplyCrop').classList.remove('hidden');
+      }
+    }
+
+    updateCropBox(e) {
+      const r = this.cropRect;
+      const box = this.dom.cropBox;
+      box.style.left = r.x + 'px';
+      box.style.top = r.y + 'px';
+      box.style.width = r.w + 'px';
+      box.style.height = r.h + 'px';
+    }
+
+    applyCrop() {
+      const r = this.cropRect;
+      if (r.w < 16 || r.h < 16 || !this.source) return;
+
+      const cv = this.dom.canvas;
+      const rect = cv.getBoundingClientRect();
+      const sx = cv.width / rect.width;
+      const sy = cv.height / rect.height;
+      const pad = this.lastPad;
+
+      let rx = Math.round(r.x * sx) - pad;
+      let ry = Math.round(r.y * sy) - pad;
+      let rw = Math.round(r.w * sx);
+      let rh = Math.round(r.h * sy);
+
+      rx = Math.max(0, Math.min(this.source.width - 1, rx));
+      ry = Math.max(0, Math.min(this.source.height - 1, ry));
+      rw = Math.max(1, Math.min(this.source.width - rx, rw));
+      rh = Math.max(1, Math.min(this.source.height - ry, rh));
+
+      const nc = document.createElement('canvas');
+      nc.width = rw; nc.height = rh;
+      const nctx = nc.getContext('2d', { willReadFrequently: true });
+      nctx.imageSmoothingQuality = 'high';
+      nctx.drawImage(this.source, rx, ry, rw, rh, 0, 0, rw, rh);
+
+      this.source = nc;
+      this.toggleCrop();
+      $('imageDimensions').textContent = `${rw}×${rh}px`;
+      this.render();
+      $('workspaceStatus').textContent = 'Item recortado ✔';
+      setTimeout(() => { if (!this.cropMode) $('workspaceStatus').textContent = 'Item isolado'; }, 1600);
+    }
+
+    /* ============================ ZOOM ============================ */
+    setZoom(factor) {
+      if (!this.source) return;
+      this.zoom = factor === null ? 1 : Math.min(6, Math.max(0.25, this.zoom * factor));
+      $('zoomLevel').textContent = Math.round(this.zoom * 100) + '%';
+      this.updateDisplaySize();
+    }
+
+    /* ============================ EXPORTS ============================ */
+    downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    downloadPNG() {
+      if (!this.processed) return;
+      this.processed.toBlob(b => this.downloadBlob(b, 'sticker-isolado.png'), 'image/png');
+    }
+
+    downloadSVG() {
+      if (!this.processed) return;
+      $('workspaceStatus').textContent = 'Vetorizando…';
+      setTimeout(() => {
+        try {
+          const svg = this.buildSVG(this.processed);
+          this.downloadBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), 'sticker-vetor.svg');
+          $('workspaceStatus').textContent = 'Vetor exportado ✔';
+        } catch (err) {
+          console.error(err);
+          $('workspaceStatus').textContent = 'Falha ao vetorizar';
+        }
+      }, 30);
+    }
+
+    /* ---------- Vetorização real: raster → paths SVG ---------- */
+    buildSVG(canvas) {
+      const scale = Math.min(1, MAX_SVG / Math.max(canvas.width, canvas.height));
+      const w = Math.max(1, Math.round(canvas.width * scale));
+      const h = Math.max(1, Math.round(canvas.height * scale));
+
+      const tmp = document.createElement('canvas');
+      tmp.width = w; tmp.height = h;
+      const tctx = tmp.getContext('2d', { willReadFrequently: true });
+      tctx.imageSmoothingEnabled = true;
+      tctx.imageSmoothingQuality = 'high';
+      tctx.drawImage(canvas, 0, 0, w, h);
+
+      const imgData = tctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+
+      // reduz a paleta para no máximo 16 cores (mantém qualidade vetorial)
+      this.quantizeInPlace(data, w, h, 16);
+
+      // rótulos por cor
+      const palette = [];
+      const colorMap = new Map();
+      const labels = new Int16Array(w * h);
+      for (let p = 0; p < w * h; p++) {
+        const o = p * 4;
+        if (data[o + 3] < 128) { labels[p] = -1; continue; }
+        const key = (data[o] << 16) | (data[o + 1] << 8) | data[o + 2];
+        let idx = colorMap.get(key);
+        if (idx === undefined) {
+          idx = palette.length;
+          palette.push([data[o], data[o + 1], data[o + 2]]);
+          colorMap.set(key, idx);
+        }
+        labels[p] = idx;
+      }
+
+      // filtro de maioria 3x3 (remove ruído/pontos soltos)
+      const clean = this.majorityFilter(labels, w, h, palette.length);
+
+      // extrai arestas de contorno por cor
+      const edgesByColor = new Map();
+      const stride = w + 1;
+      const pk = (x, y) => y * stride + x;
+
+      for (let y = 0; y < h; y++) {
+        const row = y * w;
+        for (let x = 0; x < w; x++) {
+          const L = clean[row + x];
+          if (L < 0) continue;
+          const above = y > 0 ? clean[row - w + x] : -1;
+          const below = y < h - 1 ? clean[row + w + x] : -1;
+          const left  = x > 0 ? clean[row + x - 1] : -1;
+          const right = x < w - 1 ? clean[row + x + 1] : -1;
+
+          let arr = edgesByColor.get(L);
+          if (!arr) { arr = []; edgesByColor.set(L, arr); }
+
+          if (above !== L) arr.push(pk(x, y), pk(x + 1, y));
+          if (right !== L) arr.push(pk(x + 1, y), pk(x + 1, y + 1));
+          if (below !== L) arr.push(pk(x + 1, y + 1), pk(x, y + 1));
+          if (left !== L)  arr.push(pk(x, y + 1), pk(x, y));
+        }
+      }
+
+      // encadeia arestas em polígonos fechados
+      let body = '';
+      for (const [colorIdx, edges] of edgesByColor) {
+        const next = new Map();
+        for (let i = 0; i < edges.length; i += 2) {
+          const a = edges[i], b = edges[i + 1];
+          let list = next.get(a);
+          if (!list) { list = []; next.set(a, list); }
+          list.push(b);
         }
 
-        const app = new StickerStudioApp();
-    </script>
+        let d = '';
+        for (const [startKey, arr] of next) {
+          while (arr.length) {
+            const loop = [startKey];
+            let cur = startKey;
+            let guard = 0;
+            while (guard++ < 3000000) {
+              const list = next.get(cur);
+              if (!list || !list.length) break;
+              const nx = list.pop();
+              loop.push(nx);
+              cur = nx;
+              if (cur === startKey) break;
+            }
+            if (cur === startKey && loop.length >= 5) {
+              d += this.loopToPath(loop, stride);
+            }
+          }
+        }
+
+        if (!d) continue;
+        const c = palette[colorIdx];
+        const hex = '#' + ((1 << 24) | (c[0] << 16) | (c[1] << 8) | c[2]).toString(16).slice(1);
+        body += `<path fill="${hex}" fill-rule="evenodd" d="${d}"/>`;
+      }
+
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${w} ${h}">${body}</svg>`;
+    }
+
+    loopToPath(loop, stride) {
+      const n = loop.length - 1;
+      if (n < 3) return '';
+
+      const pts = new Array(n);
+      for (let i = 0; i < n; i++) {
+        const k = loop[i];
+        pts[i] = [k % stride, (k - (k % stride)) / stride];
+      }
+
+      // remove vértices colineares
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const prev = pts[(i - 1 + n) % n];
+        const cur = pts[i];
+        const nxt = pts[(i + 1) % n];
+        const d1x = Math.sign(cur[0] - prev[0]), d1y = Math.sign(cur[1] - prev[1]);
+        const d2x = Math.sign(nxt[0] - cur[0]), d2y = Math.sign(nxt[1] - cur[1]);
+        if (d1x === d2x && d1y === d2y) continue;
+        out.push(cur);
+      }
+      if (out.length < 3) return '';
+
+      let s = 'M' + out[0][0] + ' ' + out[0][1];
+      for (let i = 1; i < out.length; i++) s += 'L' + out[i][0] + ' ' + out[i][1];
+      return s + 'Z';
+    }
+
+    majorityFilter(labels, w, h, nColors) {
+      const out = new Int16Array(labels);
+      const cnt = new Int32Array(nColors + 2); // índice = label + 1
+      const touched = [];
+
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          let best = labels[y * w + x], bestC = 0;
+          for (let dy = -1; dy <= 1; dy++) {
+            const base = (y + dy) * w + x;
+            for (let dx = -1; dx <= 1; dx++) {
+              const v = labels[base + dx];
+              const idx = v + 1;
+              const c = ++cnt[idx];
+              if (c === 1) touched.push(idx);
+              if (c > bestC) { bestC = c; best = v; }
+            }
+          }
+          out[y * w + x] = best;
+          for (let i = 0; i < touched.length; i++) cnt[touched[i]] = 0;
+          touched.length = 0;
+        }
+      }
+      return out;
+    }
+
+    /* ---------- Folha A4 300 DPI ---------- */
+    exportA4() {
+      if (!this.processed) return;
+      const W = 2480, H = 3508; // A4 300 DPI
+      const c = document.createElement('canvas');
+      c.width = W; c.height = H;
+      const ctx = c.getContext('2d');
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, W, H);
+
+      const margin = 160;
+      const maxW = W - margin * 2;
+      const maxH = H - margin * 2;
+      const s = Math.min(maxW / this.processed.width, maxH / this.processed.height);
+      const dw = this.processed.width * s;
+      const dh = this.processed.height * s;
+
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(this.processed, (W - dw) / 2, (H - dh) / 2, dw, dh);
+
+      c.toBlob(b => this.downloadBlob(b, 'folha-a4-300dpi.png'), 'image/png');
+    }
+
+    /* ============================ RESET ============================ */
+    reset() {
+      this.source = null;
+      this.processed = null;
+      this.lastPad = 0;
+      this.zoom = 1;
+      if (this.cropMode) this.toggleCrop();
+
+      $('emptyState').style.display = 'block';
+      this.dom.container.style.display = 'none';
+      this.dom.cropBox.style.display = 'none';
+      $('btnToggleCrop').disabled = true;
+      $('btnDownloadSVG').disabled = true;
+      $('btnDownloadPNG').disabled = true;
+      $('btnExportA4').disabled = true;
+      $('stepIndicator').textContent = 'Passo 1';
+      $('workspaceStatus').textContent = 'Aguardando imagem…';
+      $('imageDimensions').textContent = '';
+      $('zoomLevel').textContent = '100%';
+      $('statMode').textContent = '—';
+      $('statBorder').textContent = '—';
+      $('statSize').textContent = '—';
+
+      const pc = this.dom.previewCanvas;
+      const pctx = pc.getContext('2d');
+      pctx.clearRect(0, 0, pc.width, pc.height);
+    }
+  }
+
+  window.app = new StickerStudioApp();
+})();
+</script>
 </body>
 </html>
-```
-eof
-```
