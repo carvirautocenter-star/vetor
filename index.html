@@ -1,0 +1,638 @@
+```html
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sticker & Vector Studio Pro</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation;
+        }
+        /* Custom smooth scrollbars */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        .checkerboard {
+            background-image: linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+                              linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+                              linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+    </style>
+</head>
+<body class="h-full bg-slate-950 text-slate-100 flex flex-col overflow-hidden">
+
+    <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0 shadow-lg z-20">
+        <div class="flex items-center space-x-2.5">
+            <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-md shadow-indigo-500/20 flex items-center justify-center">
+                <i data-lucide="layers" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-sm sm:text-base text-white tracking-tight flex items-center gap-1.5">
+                    StickerStudio <span class="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full border border-indigo-500/30">A4 Pro</span>
+                </h1>
+                <p class="text-[11px] text-slate-400 hidden sm:block">Vetorizador Inteligente & Folhas A4 300 DPI</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="app.resetWorkspace()" class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition border border-slate-700">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Limpar</span>
+            </button>
+            <button onclick="app.exportA4Sheet()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-lg transition shadow-md shadow-indigo-600/30">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i> Exportar A4
+            </button>
+            <!-- Mobile Toggle Sidebar -->
+            <button onclick="app.toggleMobileSidebar()" class="lg:hidden p-2 bg-indigo-600 text-white rounded-lg">
+                <i data-lucide="menu" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+        
+        <!-- SIDEBAR CONTROLS (Desktop & Mobile Drawer) -->
+        <aside id="sidebar" class="absolute lg:relative inset-y-0 left-0 w-80 max-w-full bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 shadow-2xl lg:shadow-none">
+            <div class="p-3.5 border-b border-slate-800 font-semibold text-xs text-slate-200 flex items-center justify-between">
+                <span class="flex items-center gap-2"><i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i> Painel de Controle</span>
+                <div class="flex items-center gap-2">
+                    <span id="stepIndicator" class="text-[10px] text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800/50">Passo 1: Upload</span>
+                    <button onclick="app.toggleMobileSidebar()" class="lg:hidden text-slate-400 hover:text-white">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                
+                <!-- SECTION 1: UPLOAD -->
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">1. Enviar Cartela / Adesivos</label>
+                    <div id="dropZone" class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-3 text-center cursor-pointer bg-slate-800/40 hover:bg-slate-800 transition group relative">
+                        <input type="file" id="imageUpload" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10">
+                        <div class="flex flex-col items-center justify-center space-y-1 py-1">
+                            <div class="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-full group-hover:scale-110 transition">
+                                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                            </div>
+                            <div class="text-xs text-slate-300 font-medium">Toque para enviar cartela</div>
+                            <div class="text-[10px] text-slate-500">PNG, JPG, WebP (Ideal em grade A4)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: CROPPING & ITEM ISOLATION -->
+                <div class="space-y-2 pt-2 border-t border-slate-800">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">2. Recorte Individual</label>
+                        <button id="btnToggleCrop" onclick="app.toggleCropMode()" disabled class="text-[11px] bg-slate-800 hover:bg-indigo-600 disabled:opacity-50 text-slate-300 hover:text-white px-2 py-1 rounded transition flex items-center gap-1 border border-slate-700">
+                            <i data-lucide="crop" class="w-3 h-3"></i> Recortar Item
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-slate-400 leading-relaxed">
+                        Ative o modo de recorte e arraste o dedo/mouse sobre um único adesivo/chaveiro na grade para isolá-lo.
+                    </p>
+                    <button id="btnApplyCrop" onclick="app.applyCrop()" style="display:none;" class="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow transition flex items-center justify-center gap-1.5">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i> Confirmar Recorte
+                    </button>
+                </div>
+
+                <!-- SECTION 3: VECTORIZATION / STICKER STYLING -->
+                <div class="space-y-3 pt-2 border-t border-slate-800">
+                    <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">3. Tratamento & Estilo</label>
+                    
+                    <div>
+                        <label class="text-[10px] text-slate-400 block mb-1">Modo de Conversão</label>
+                        <select id="vectorMode" onchange="app.processImage()" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg p-2 focus:ring-1 focus:ring-indigo-500 outline-none">
+                            <option value="color">Redução de Cores (Estilo Ilustração)</option>
+                            <option value="threshold">Preto e Branco / Linha (Threshold)</option>
+                            <option value="smooth">Suavização Estilizada (Cartoon)</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[10px] text-slate-400 block mb-1">Cores (<span id="colorCountVal">8</span>)</label>
+                            <input type="range" id="colorCount" min="2" max="32" value="8" oninput="document.getElementById('colorCountVal').innerText=this.value; app.processImage();" class="w-full accent-indigo-500 bg-slate-800 rounded h-1">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-slate-400 block mb-1">Limiar (<span id="thresholdVal">128</span>)</label>
+                            <input type="range" id="threshold" min="0" max="255" value="128" oninput="document.getElementById('thresholdVal').innerText=this.value; app.processImage();" class="w-full accent-indigo-500 bg-slate-800 rounded h-1">
+                        </div>
+                    </div>
+
+                    <!-- Sticker Outline Border -->
+                    <div class="bg-slate-800/40 p-2.5 rounded-lg border border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-400"></i> Borda Contorno (Sticker Cut)
+                            </span>
+                            <input type="checkbox" id="enableBorder" checked onchange="app.processImage()" class="accent-indigo-600 w-4 h-4 rounded">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-slate-400">Espessura:</span>
+                            <input type="range" id="borderSize" min="2" max="25" value="10" oninput="app.processImage()" class="flex-1 accent-indigo-500 bg-slate-700 rounded h-1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: A4 STANDARD INFO -->
+                <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                    <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">4. Padrão A4 (300 DPI)</label>
+                    <div class="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700 text-xs space-y-1 text-slate-300">
+                        <div class="flex justify-between"><span>Tamanho:</span> <span class="font-mono text-indigo-400">21 x 29.7 cm</span></div>
+                        <div class="flex justify-between"><span>Resolução:</span> <span class="font-mono text-indigo-400">2480 x 3508 px</span></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SIDEBAR FOOTER EXPORTS -->
+            <div class="p-3 border-t border-slate-800 bg-slate-900 space-y-2">
+                <button onclick="app.downloadSVG()" id="btnDownloadSVG" disabled class="w-full py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 rounded-lg text-xs font-semibold transition border border-slate-700 flex items-center justify-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4 text-indigo-400"></i> Baixar Vetor (.SVG)
+                </button>
+                <button onclick="app.downloadPNG()" id="btnDownloadPNG" disabled class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition shadow-md shadow-indigo-600/30 flex items-center justify-center gap-2">
+                    <i data-lucide="image" class="w-4 h-4"></i> Baixar Imagem Isolada (.PNG)
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 bg-slate-950 flex flex-col relative overflow-hidden">
+            
+            <!-- Workspace Bar -->
+            <div class="h-10 bg-slate-900/60 border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-2 text-xs text-slate-400 truncate">
+                    <span id="workspaceStatus" class="font-medium text-slate-200 truncate">Aguardando cartela...</span>
+                    <span id="imageDimensions" class="bg-slate-800 px-2 py-0.5 rounded text-[10px] font-mono text-indigo-400 hidden sm:inline"></span>
+                </div>
+                <div class="flex items-center space-x-1 shrink-0">
+                    <button onclick="app.setZoom(0.8)" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="Zoom Out"><i data-lucide="zoom-out" class="w-4 h-4"></i></button>
+                    <span id="zoomLevel" class="text-xs font-mono text-slate-300 w-10 text-center">100%</span>
+                    <button onclick="app.setZoom(1.2)" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="Zoom In"><i data-lucide="zoom-in" class="w-4 h-4"></i></button>
+                    <button onclick="app.resetZoom()" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="Reset Zoom"><i data-lucide="maximize-2" class="w-4 h-4"></i></button>
+                </div>
+            </div>
+
+            <!-- Canvas Viewport Area -->
+            <div id="viewport" class="flex-1 overflow-auto flex items-center justify-center p-4 relative checkerboard">
+                
+                <!-- Initial Empty State Placeholder -->
+                <div id="emptyState" class="text-center max-w-sm p-6 bg-slate-900/95 border border-slate-800 rounded-2xl shadow-2xl backdrop-blur m-auto">
+                    <div class="w-14 h-14 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="image-plus" class="w-7 h-7"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-slate-100 mb-1">Envie sua Cartela ou Adesivos</h3>
+                    <p class="text-xs text-slate-400 mb-4 leading-relaxed">Carregue uma imagem em grade (estilo chaveiros ou adesivos) para processar, recortar e exportar.</p>
+                    <label class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold cursor-pointer shadow-lg shadow-indigo-600/30 transition">
+                        <i data-lucide="upload" class="w-4 h-4"></i> Selecionar Imagem
+                        <input type="file" accept="image/*" class="hidden" onchange="app.handleImageUpload(event)">
+                    </label>
+                </div>
+
+                <!-- A4 Simulation Container -->
+                <div id="canvasContainer" class="relative shadow-2xl transition-transform duration-200 origin-center" style="display: none;">
+                    <div class="bg-white rounded shadow-2xl overflow-hidden relative border border-slate-300" style="width: 450px; height: 636px;">
+                        <canvas id="mainCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+                        <!-- Crop Box Overlay -->
+                        <div id="cropBox" style="display:none; border: 2px dashed #6366f1; background: rgba(99, 102, 241, 0.2); position: absolute; pointer-events: none;"></div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <aside class="w-72 bg-slate-900/95 border-l border-slate-800 flex flex-col shrink-0 lg:flex">
+            <div class="p-3.5 border-b border-slate-800 font-semibold text-xs text-slate-200 flex items-center justify-between">
+                <span class="flex items-center gap-2"><i data-lucide="eye" class="w-4 h-4 text-indigo-400"></i> Prévia em Tempo Real</span>
+                <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">HD Ready</span>
+            </div>
+
+            <div class="p-4 space-y-4 overflow-y-auto">
+                <div class="aspect-square bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center relative overflow-hidden checkerboard shadow-inner">
+                    <div id="previewContainer" class="w-full h-full flex items-center justify-center p-2">
+                        <span class="text-xs text-slate-500 text-center">Aguardando processamento...</span>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">Status do Arquivo</label>
+                    <div class="bg-slate-800/60 p-3 rounded-lg border border-slate-800 space-y-1 text-xs text-slate-300">
+                        <div class="flex justify-between"><span>Modo Atual:</span> <span id="statMode" class="font-mono text-indigo-400">Ilustração</span></div>
+                        <div class="flex justify-between"><span>Contorno Branco:</span> <span id="statBorder" class="font-mono text-emerald-400">Ativado</span></div>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-950/40 border border-indigo-900/50 p-3 rounded-xl space-y-1">
+                    <div class="flex items-center gap-1.5 text-indigo-400 font-semibold text-xs">
+                        <i data-lucide="help-circle" class="w-3.5 h-3.5"></i> Dica de Uso Mobile
+                    </div>
+                    <p class="text-[10px] text-slate-400 leading-relaxed">
+                        Use o botão "Recortar Item" para selecionar e isolar uma figura individualmente da sua cartela antes de exportar.
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        class StickerStudioApp {
+            constructor() {
+                this.image = null;
+                this.originalWidth = 0;
+                this.originalHeight = 0;
+                this.zoom = 1;
+                this.cropMode = false;
+                this.isDragging = false;
+                this.startX = 0;
+                this.startY = 0;
+                this.cropRect = { x: 0, y: 0, w: 0, h: 0 };
+                this.processedImageData = null;
+                this.vectorSvgString = '';
+
+                this.initListeners();
+            }
+
+            initListeners() {
+                const dropZone = document.getElementById('dropZone');
+                const fileInput = document.getElementById('imageUpload');
+
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('border-indigo-500', 'bg-slate-800');
+                });
+
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.classList.remove('border-indigo-500', 'bg-slate-800');
+                });
+
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('border-indigo-500', 'bg-slate-800');
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        this.loadImageFile(e.dataTransfer.files[0]);
+                    }
+                });
+
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        this.loadImageFile(e.target.files[0]);
+                    }
+                });
+
+                const canvas = document.getElementById('mainCanvas');
+                
+                // Mouse & Touch events for crop box selection
+                canvas.addEventListener('mousedown', (e) => this.onStart(e.clientX, e.clientY));
+                canvas.addEventListener('mousemove', (e) => this.onMove(e.clientX, e.clientY));
+                canvas.addEventListener('mouseup', () => this.onEnd());
+
+                canvas.addEventListener('touchstart', (e) => {
+                    if(e.touches.length === 1) {
+                        this.onStart(e.touches[0].clientX, e.touches[0].clientY);
+                    }
+                });
+                canvas.addEventListener('touchmove', (e) => {
+                    if(e.touches.length === 1) {
+                        this.onMove(e.touches[0].clientX, e.touches[0].clientY);
+                    }
+                });
+                canvas.addEventListener('touchend', () => this.onEnd());
+            }
+
+            toggleMobileSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('-translate-x-full');
+            }
+
+            handleImageUpload(e) {
+                if (e.target.files && e.target.files[0]) {
+                    this.loadImageFile(e.target.files[0]);
+                }
+            }
+
+            loadImageFile(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.image = img;
+                        this.originalWidth = img.width;
+                        this.originalHeight = img.height;
+                        
+                        document.getElementById('emptyState').style.display = 'none';
+                        document.getElementById('canvasContainer').style.display = 'block';
+                        document.getElementById('btnToggleCrop').disabled = false;
+                        document.getElementById('btnDownloadSVG').disabled = false;
+                        document.getElementById('btnDownloadPNG').disabled = false;
+                        document.getElementById('stepIndicator').innerText = 'Passo 2: Processamento';
+                        document.getElementById('workspaceStatus').innerText = 'Cartela carregada com sucesso';
+                        document.getElementById('imageDimensions').innerText = `${img.width}x${img.height}px`;
+
+                        this.setupCanvas();
+                        this.processImage();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            setupCanvas() {
+                const canvas = document.getElementById('mainCanvas');
+                canvas.width = this.originalWidth;
+                canvas.height = this.originalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(this.image, 0, 0);
+            }
+
+            processImage() {
+                if (!this.image) return;
+
+                const canvas = document.getElementById('mainCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(this.image, 0, 0);
+
+                let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let data = imgData.data;
+
+                const mode = document.getElementById('vectorMode').value;
+                const colorCount = parseInt(document.getElementById('colorCount').value);
+                const threshold = parseInt(document.getElementById('threshold').value);
+                const enableBorder = document.getElementById('enableBorder').checked;
+                const borderSize = parseInt(document.getElementById('borderSize').value);
+
+                document.getElementById('statMode').innerText = mode === 'threshold' ? 'Preto/Branco' : (mode === 'smooth' ? 'Cartoon' : 'Cores Reduzidas');
+                document.getElementById('statBorder').innerText = enableBorder ? `${borderSize}px` : 'Desativado';
+
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+                    if (a < 30) continue;
+
+                    if (mode === 'threshold') {
+                        let avg = (r + g + b) / 3;
+                        let val = avg > threshold ? 255 : 0;
+                        data[i] = val; data[i+1] = val; data[i+2] = val;
+                    } else if (mode === 'color') {
+                        let factor = Math.floor(256 / colorCount);
+                        data[i] = Math.floor(r / factor) * factor;
+                        data[i+1] = Math.floor(g / factor) * factor;
+                        data[i+2] = Math.floor(b / factor) * factor;
+                    } else if (mode === 'smooth') {
+                        data[i] = r > 127 ? 255 : 0;
+                        data[i+1] = g > 127 ? 255 : 0;
+                        data[i+2] = b > 127 ? 255 : 0;
+                    }
+                }
+
+                ctx.putImageData(imgData, 0, 0);
+
+                if (enableBorder) {
+                    this.renderStickerBorder(ctx, canvas.width, canvas.height, borderSize);
+                }
+
+                this.processedImageData = canvas.toDataURL('image/png');
+                this.updatePreview(this.processedImageData);
+                this.generateSVGString(canvas);
+            }
+
+            renderStickerBorder(ctx, width, height, size) {
+                ctx.save();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = size * 2;
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                ctx.drawImage(this.image, 0, 0);
+                ctx.restore();
+            }
+
+            updatePreview(dataUrl) {
+                const container = document.getElementById('previewContainer');
+                container.innerHTML = `<img src="${dataUrl}" class="max-w-full max-h-full object-contain drop-shadow-md">`;
+            }
+
+            generateSVGString(canvas) {
+                const dataUrl = canvas.toDataURL('image/png');
+                this.vectorSvgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${canvas.width} ${canvas.height}" width="100%" height="100%">
+    <g id="sticker-item">
+        <image href="${dataUrl}" width="${canvas.width}" height="${canvas.height}" />
+    </g>
+</svg>`;
+            }
+
+            toggleCropMode() {
+                this.cropMode = !this.cropMode;
+                const btn = document.getElementById('btnToggleCrop');
+                const cropBox = document.getElementById('cropBox');
+                if (this.cropMode) {
+                    btn.classList.add('bg-indigo-600', 'text-white');
+                    cropBox.style.display = 'block';
+                    document.getElementById('workspaceStatus').innerText = 'Modo Recorte: Arraste sobre o adesivo';
+                } else {
+                    btn.classList.remove('bg-indigo-600', 'text-white');
+                    cropBox.style.display = 'none';
+                    document.getElementById('workspaceStatus').innerText = 'Cartela Completa';
+                }
+            }
+
+            onStart(clientX, clientY) {
+                if (!this.cropMode) return;
+                this.isDragging = true;
+                const canvas = document.getElementById('mainCanvas');
+                const rect = canvas.getBoundingClientRect();
+                this.startX = clientX - rect.left;
+                this.startY = clientY - rect.top;
+                
+                this.cropRect.x = this.startX;
+                this.cropRect.y = this.startY;
+                this.cropRect.w = 0;
+                this.cropRect.h = 0;
+            }
+
+            onMove(clientX, clientY) {
+                if (!this.isDragging || !this.cropMode) return;
+                const canvas = document.getElementById('mainCanvas');
+                const rect = canvas.getBoundingClientRect();
+                let currentX = clientX - rect.left;
+                let currentY = clientY - rect.top;
+
+                let width = currentX - this.startX;
+                let height = currentY - this.startY;
+
+                let left = width < 0 ? currentX : this.startX;
+                let top = height < 0 ? currentY : this.startY;
+
+                const cropBox = document.getElementById('cropBox');
+                cropBox.style.left = left + 'px';
+                cropBox.style.top = top + 'px';
+                cropBox.style.width = Math.abs(width) + 'px';
+                cropBox.style.height = Math.abs(height) + 'px';
+
+                this.cropRect = { x: left, y: top, w: Math.abs(width), h: Math.abs(height) };
+                if (this.cropRect.w > 15 && this.cropRect.h > 15) {
+                    document.getElementById('btnApplyCrop').style.display = 'flex';
+                }
+            }
+
+            onEnd() {
+                if (!this.cropMode) return;
+                this.isDragging = false;
+            }
+
+            applyCrop() {
+                if (this.cropRect.w < 10 || this.cropRect.h < 10) return;
+                
+                const canvas = document.getElementById('mainCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                const displayWidth = canvas.clientWidth;
+                const displayHeight = canvas.clientHeight;
+                const scaleX = canvas.width / displayWidth;
+                const scaleY = canvas.height / displayHeight;
+
+                let realX = this.cropRect.x * scaleX;
+                let realY = this.cropRect.y * scaleY;
+                let realW = this.cropRect.w * scaleX;
+                let realH = this.cropRect.h * scaleY;
+
+                let croppedData = ctx.getImageData(realX, realY, realW, realH);
+
+                canvas.width = realW;
+                canvas.height = realH;
+                ctx.putImageData(croppedData, 0, 0);
+
+                let newImg = new Image();
+                newImg.onload = () => {
+                    this.image = newImg;
+                    this.originalWidth = newImg.width;
+                    this.originalHeight = newImg.height;
+                    this.toggleCropMode();
+                    document.getElementById('btnApplyCrop').style.display = 'none';
+                    document.getElementById('workspaceStatus').innerText = 'Adesivo recortado com sucesso!';
+                    this.processImage();
+                };
+                newImg.src = canvas.toDataURL();
+            }
+
+            setZoom(factor) {
+                this.zoom *= factor;
+                this.updateZoomTransform();
+            }
+
+            resetZoom() {
+                this.zoom = 1;
+                this.updateZoomTransform();
+            }
+
+            updateZoomTransform() {
+                const container = document.getElementById('canvasContainer');
+                container.style.transform = `scale(${this.zoom})`;
+                document.getElementById('zoomLevel').innerText = Math.round(this.zoom * 100) + '%';
+            }
+
+            downloadSVG() {
+                if (!this.vectorSvgString) return;
+                const blob = new Blob([this.vectorSvgString], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'sticker-vector.svg';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            downloadPNG() {
+                if (!this.processedImageData) return;
+                const a = document.createElement('a');
+                a.href = this.processedImageData;
+                a.download = 'sticker-isolated-hd.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+
+            exportA4Sheet() {
+                if (!this.processedImageData) {
+                    alert('Nenhuma imagem carregada para exportar.');
+                    return;
+                }
+                const a4Canvas = document.createElement('canvas');
+                a4Canvas.width = 2480; // 300 DPI A4 Width
+                a4Canvas.height = 3508; // 300 DPI A4 Height
+                const ctx = a4Canvas.getContext('2d');
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, a4Canvas.width, a4Canvas.height);
+
+                const img = new Image();
+                img.onload = () => {
+                    const margin = 180;
+                    const maxW = a4Canvas.width - (margin * 2);
+                    const maxH = a4Canvas.height - (margin * 2);
+                    
+                    let w = img.width;
+                    let h = img.height;
+                    let ratio = Math.min(maxW / w, maxH / h);
+                    let targetW = w * ratio;
+                    let targetH = h * ratio;
+                    let x = (a4Canvas.width - targetW) / 2;
+                    let y = (a4Canvas.height - targetH) / 2;
+
+                    ctx.drawImage(img, x, y, targetW, targetH);
+
+                    const dataUrl = a4Canvas.toDataURL('image/png', 1.0);
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = 'folha-a4-300dpi.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                };
+                img.src = this.processedImageData;
+            }
+
+            resetWorkspace() {
+                this.image = null;
+                this.processedImageData = null;
+                this.vectorSvgString = '';
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('canvasContainer').style.display = 'none';
+                document.getElementById('btnToggleCrop').disabled = true;
+                document.getElementById('btnDownloadSVG').disabled = true;
+                document.getElementById('btnDownloadPNG').disabled = true;
+                document.getElementById('stepIndicator').innerText = 'Passo 1: Upload';
+                document.getElementById('workspaceStatus').innerText = 'Aguardando cartela...';
+                document.getElementById('imageDimensions').innerText = '';
+                document.getElementById('previewContainer').innerHTML = '<span class="text-xs text-slate-500 text-center">Aguardando processamento...</span>';
+            }
+        }
+
+        const app = new StickerStudioApp();
+    </script>
+</body>
+</html>
+```
+eof
+```
